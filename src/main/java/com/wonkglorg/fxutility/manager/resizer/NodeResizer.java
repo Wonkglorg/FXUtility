@@ -1,6 +1,5 @@
-package com.wonkglorg.fxutility.manager;
+package com.wonkglorg.fxutility.manager.resizer;
 
-import javafx.event.EventHandler;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
@@ -29,14 +28,180 @@ import javafx.scene.shape.Rectangle;
  * <p>
  * There is defaultListener and it works only with Canvas nad Rectangle
  */
-
+@SuppressWarnings("unused")
 public class NodeResizer {
-    public interface OnDragResizeEventListener {
-        void onDrag(Node node, double x, double y, double h, double w);
 
-        void onResize(Node node, double x, double y, double h, double w);
+    private double clickX, clickY, nodeX, nodeY, nodeH, nodeW;
+
+    private State state = State.DEFAULT;
+
+    private final Node node;
+    private OnDragResizeEventListener listener = defaultListener;
+
+    private static final int MARGIN = 8;
+    private static final double MIN_W = 30;
+    private static final double MIN_H = 20;
+
+    private NodeResizer(Node node, OnDragResizeEventListener listener) {
+        this.node = node;
+        if (listener != null)
+            this.listener = listener;
     }
 
+    public static void makeResizable(Node node) {
+        makeResizable(node, null);
+    }
+
+    public static void makeResizable(Node node, OnDragResizeEventListener listener) {
+        final NodeResizer resizer = new NodeResizer(node, listener);
+
+        //if event does not register in correct order change this to an event filter, filters get applied before event handlers
+
+        node.setOnMousePressed(resizer::mousePressed);
+        node.setOnMouseDragged(resizer::mouseDragged);
+        node.setOnMouseMoved(resizer::mouseOver);
+        node.setOnMouseReleased(resizer::mouseReleased);
+    }
+
+    protected void mouseReleased(MouseEvent event) {
+        node.setCursor(Cursor.DEFAULT);
+        state = State.DEFAULT;
+    }
+
+    protected void mouseOver(MouseEvent event) {
+        State state = currentMouseState(event);
+        Cursor cursor = getCursorForState(state);
+        node.setCursor(cursor);
+    }
+
+    private State currentMouseState(MouseEvent event) {
+        State state = State.DEFAULT;
+        boolean left = isLeftResizeZone(event);
+        boolean right = isRightResizeZone(event);
+        boolean top = isTopResizeZone(event);
+        boolean bottom = isBottomResizeZone(event);
+
+        if (left && top) state = State.NW_RESIZE;
+        else if (left && bottom) state = State.SW_RESIZE;
+        else if (right && top) state = State.NE_RESIZE;
+        else if (right && bottom) state = State.SE_RESIZE;
+        else if (right) state = State.E_RESIZE;
+        else if (left) state = State.W_RESIZE;
+        else if (top) state = State.N_RESIZE;
+        else if (bottom) state = State.S_RESIZE;
+        else if (isInDragZone(event)) state = State.DRAG;
+
+        return state;
+    }
+
+    private static Cursor getCursorForState(State state) {
+        return switch (state) {
+            case NW_RESIZE -> Cursor.NW_RESIZE;
+            case SW_RESIZE -> Cursor.SW_RESIZE;
+            case NE_RESIZE -> Cursor.NE_RESIZE;
+            case SE_RESIZE -> Cursor.SE_RESIZE;
+            case E_RESIZE -> Cursor.E_RESIZE;
+            case W_RESIZE -> Cursor.W_RESIZE;
+            case N_RESIZE -> Cursor.N_RESIZE;
+            case S_RESIZE -> Cursor.S_RESIZE;
+            default -> Cursor.DEFAULT;
+        };
+    }
+
+
+    protected void mouseDragged(MouseEvent event) {
+
+        if (listener != null) {
+            double mouseX = parentX(event.getX());
+            double mouseY = parentY(event.getY());
+            if (state == State.DRAG) {
+                listener.onDrag(node, mouseX - clickX, mouseY - clickY, nodeH, nodeW);
+            } else if (state != State.DEFAULT) {
+                //resizing
+                double newX = nodeX;
+                double newY = nodeY;
+                double newH = nodeH;
+                double newW = nodeW;
+
+                // Right Resize
+                if (state == State.E_RESIZE || state == State.NE_RESIZE || state == State.SE_RESIZE) {
+                    newW = mouseX - nodeX;
+                }
+                // Left Resize
+                if (state == State.W_RESIZE || state == State.NW_RESIZE || state == State.SW_RESIZE) {
+                    newX = mouseX;
+                    newW = nodeW + nodeX - newX;
+                }
+
+                // Bottom Resize
+                if (state == State.S_RESIZE || state == State.SE_RESIZE || state == State.SW_RESIZE) {
+                    newH = mouseY - nodeY;
+                }
+                // Top Resize
+                if (state == State.N_RESIZE || state == State.NW_RESIZE || state == State.NE_RESIZE) {
+                    newY = mouseY;
+                    newH = nodeH + nodeY - newY;
+                }
+
+                //min valid rect Size Check
+                if (newW < MIN_W) {
+                    if (state == State.W_RESIZE || state == State.NW_RESIZE || state == State.SW_RESIZE)
+                        newX = newX - MIN_W + newW;
+                    newW = MIN_W;
+                }
+
+                if (newH < MIN_H) {
+                    if (state == State.N_RESIZE || state == State.NW_RESIZE || state == State.NE_RESIZE)
+                        newY = newY + newH - MIN_H;
+                    newH = MIN_H;
+                }
+
+                listener.onResize(node, newX, newY, newH, newW);
+            }
+        }
+    }
+
+    protected void mousePressed(MouseEvent event) {
+
+        if (isInResizeZone(event)) {
+            setNewInitialEventCoordinates(event);
+            state = currentMouseState(event);
+        } else if (isInDragZone(event)) {
+            setNewInitialEventCoordinates(event);
+            state = State.DRAG;
+        } else {
+            state = State.DEFAULT;
+        }
+    }
+
+    private void setNewInitialEventCoordinates(MouseEvent event) {
+        nodeX = nodeX();
+        nodeY = nodeY();
+        nodeH = nodeH();
+        nodeW = nodeW();
+        clickX = event.getX();
+        clickY = event.getY();
+    }
+
+    private boolean isInResizeZone(MouseEvent event) {
+        return isLeftResizeZone(event) || isRightResizeZone(event)
+                || isBottomResizeZone(event) || isTopResizeZone(event);
+    }
+
+    private boolean isInDragZone(MouseEvent event) {
+        double xPos = parentX(event.getX());
+        double yPos = parentY(event.getY());
+        double nodeX = nodeX() + MARGIN;
+        double nodeY = nodeY() + MARGIN;
+        double nodeX0 = nodeX() + nodeW() - MARGIN;
+        double nodeY0 = nodeY() + nodeH() - MARGIN;
+
+        return (xPos > nodeX && xPos < nodeX0) && (yPos > nodeY && yPos < nodeY0);
+    }
+
+    /**
+     * Default listener implementation
+     */
     private static final OnDragResizeEventListener defaultListener = new OnDragResizeEventListener() {
         @Override
         public void onDrag(Node node, double x, double y, double h, double w) {
@@ -81,215 +246,6 @@ public class NodeResizer {
             }
         }
     };
-
-    public static enum S {
-        DEFAULT,
-        DRAG,
-        NW_RESIZE,
-        SW_RESIZE,
-        NE_RESIZE,
-        SE_RESIZE,
-        E_RESIZE,
-        W_RESIZE,
-        N_RESIZE,
-        S_RESIZE;
-    }
-
-
-    private double clickX, clickY, nodeX, nodeY, nodeH, nodeW;
-
-    private S state = S.DEFAULT;
-
-    private Node node;
-    private OnDragResizeEventListener listener = defaultListener;
-
-    private static final int MARGIN = 8;
-    private static final double MIN_W = 30;
-    private static final double MIN_H = 20;
-
-    private NodeResizer(Node node, OnDragResizeEventListener listener) {
-        this.node = node;
-        if (listener != null)
-            this.listener = listener;
-    }
-
-    public static void makeResizable(Node node) {
-        makeResizable(node, null);
-    }
-
-    public static void makeResizable(Node node, OnDragResizeEventListener listener) {
-        final NodeResizer resizer = new NodeResizer(node, listener);
-
-        node.setOnMousePressed(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                resizer.mousePressed(event);
-            }
-        });
-        node.setOnMouseDragged(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                resizer.mouseDragged(event);
-            }
-        });
-        node.setOnMouseMoved(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                resizer.mouseOver(event);
-            }
-        });
-        node.setOnMouseReleased(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                resizer.mouseReleased(event);
-            }
-        });
-    }
-
-    protected void mouseReleased(MouseEvent event) {
-        node.setCursor(Cursor.DEFAULT);
-        state = S.DEFAULT;
-    }
-
-    protected void mouseOver(MouseEvent event) {
-        S state = currentMouseState(event);
-        Cursor cursor = getCursorForState(state);
-        node.setCursor(cursor);
-    }
-
-    private S currentMouseState(MouseEvent event) {
-        S state = S.DEFAULT;
-        boolean left = isLeftResizeZone(event);
-        boolean right = isRightResizeZone(event);
-        boolean top = isTopResizeZone(event);
-        boolean bottom = isBottomResizeZone(event);
-
-        if (left && top) state = S.NW_RESIZE;
-        else if (left && bottom) state = S.SW_RESIZE;
-        else if (right && top) state = S.NE_RESIZE;
-        else if (right && bottom) state = S.SE_RESIZE;
-        else if (right) state = S.E_RESIZE;
-        else if (left) state = S.W_RESIZE;
-        else if (top) state = S.N_RESIZE;
-        else if (bottom) state = S.S_RESIZE;
-        else if (isInDragZone(event)) state = S.DRAG;
-
-        return state;
-    }
-
-    private static Cursor getCursorForState(S state) {
-        switch (state) {
-            case NW_RESIZE:
-                return Cursor.NW_RESIZE;
-            case SW_RESIZE:
-                return Cursor.SW_RESIZE;
-            case NE_RESIZE:
-                return Cursor.NE_RESIZE;
-            case SE_RESIZE:
-                return Cursor.SE_RESIZE;
-            case E_RESIZE:
-                return Cursor.E_RESIZE;
-            case W_RESIZE:
-                return Cursor.W_RESIZE;
-            case N_RESIZE:
-                return Cursor.N_RESIZE;
-            case S_RESIZE:
-                return Cursor.S_RESIZE;
-            default:
-                return Cursor.DEFAULT;
-        }
-    }
-
-
-    protected void mouseDragged(MouseEvent event) {
-
-        if (listener != null) {
-            double mouseX = parentX(event.getX());
-            double mouseY = parentY(event.getY());
-            if (state == S.DRAG) {
-                listener.onDrag(node, mouseX - clickX, mouseY - clickY, nodeH, nodeW);
-            } else if (state != S.DEFAULT) {
-                //resizing
-                double newX = nodeX;
-                double newY = nodeY;
-                double newH = nodeH;
-                double newW = nodeW;
-
-                // Right Resize
-                if (state == S.E_RESIZE || state == S.NE_RESIZE || state == S.SE_RESIZE) {
-                    newW = mouseX - nodeX;
-                }
-                // Left Resize
-                if (state == S.W_RESIZE || state == S.NW_RESIZE || state == S.SW_RESIZE) {
-                    newX = mouseX;
-                    newW = nodeW + nodeX - newX;
-                }
-
-                // Bottom Resize
-                if (state == S.S_RESIZE || state == S.SE_RESIZE || state == S.SW_RESIZE) {
-                    newH = mouseY - nodeY;
-                }
-                // Top Resize
-                if (state == S.N_RESIZE || state == S.NW_RESIZE || state == S.NE_RESIZE) {
-                    newY = mouseY;
-                    newH = nodeH + nodeY - newY;
-                }
-
-                //min valid rect Size Check
-                if (newW < MIN_W) {
-                    if (state == S.W_RESIZE || state == S.NW_RESIZE || state == S.SW_RESIZE)
-                        newX = newX - MIN_W + newW;
-                    newW = MIN_W;
-                }
-
-                if (newH < MIN_H) {
-                    if (state == S.N_RESIZE || state == S.NW_RESIZE || state == S.NE_RESIZE)
-                        newY = newY + newH - MIN_H;
-                    newH = MIN_H;
-                }
-
-                listener.onResize(node, newX, newY, newH, newW);
-            }
-        }
-    }
-
-    protected void mousePressed(MouseEvent event) {
-
-        if (isInResizeZone(event)) {
-            setNewInitialEventCoordinates(event);
-            state = currentMouseState(event);
-        } else if (isInDragZone(event)) {
-            setNewInitialEventCoordinates(event);
-            state = S.DRAG;
-        } else {
-            state = S.DEFAULT;
-        }
-    }
-
-    private void setNewInitialEventCoordinates(MouseEvent event) {
-        nodeX = nodeX();
-        nodeY = nodeY();
-        nodeH = nodeH();
-        nodeW = nodeW();
-        clickX = event.getX();
-        clickY = event.getY();
-    }
-
-    private boolean isInResizeZone(MouseEvent event) {
-        return isLeftResizeZone(event) || isRightResizeZone(event)
-                || isBottomResizeZone(event) || isTopResizeZone(event);
-    }
-
-    private boolean isInDragZone(MouseEvent event) {
-        double xPos = parentX(event.getX());
-        double yPos = parentY(event.getY());
-        double nodeX = nodeX() + MARGIN;
-        double nodeY = nodeY() + MARGIN;
-        double nodeX0 = nodeX() + nodeW() - MARGIN;
-        double nodeY0 = nodeY() + nodeH() - MARGIN;
-
-        return (xPos > nodeX && xPos < nodeX0) && (yPos > nodeY && yPos < nodeY0);
-    }
 
     private boolean isLeftResizeZone(MouseEvent event) {
         return intersect(0, event.getX());
