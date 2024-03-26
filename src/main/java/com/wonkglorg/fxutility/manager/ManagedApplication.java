@@ -44,10 +44,9 @@ public abstract class ManagedApplication extends javafx.application.Application 
      * @param name
      * @param fxmlPath
      */
-    public void addScene(String name, String fxmlPath) {
-
-        URL resource = getResource(validatePath(fxmlPath, name));
-        FXMLLoader loader = new FXMLLoader(resource);
+    public void addScene(String name, URL fxmlPath) {
+        if (fxmlPath == null) throw new NullPointerException("Path for: \"" + name + "\" cannot be null!");
+        FXMLLoader loader = new FXMLLoader(fxmlPath);
         Parent root = null;
         try {
             root = loader.load();
@@ -108,13 +107,11 @@ public abstract class ManagedApplication extends javafx.application.Application 
      * @param fxmlPath path to the fxml file
      * @throws IOException
      */
-    public void addNode(String name, String fxmlPath) {
-
-        URL resource = getResource(validatePath(fxmlPath, name));
-
+    public void addNode(String name, URL fxmlPath) {
+        if (fxmlPath == null) throw new NullPointerException("Path for: \"" + name + "\" cannot be null!");
         Node node = null;
         try {
-            node = FXMLLoader.load(resource);
+            node = FXMLLoader.load(fxmlPath);
         } catch (IOException e) {
             throw new RuntimeException("Could not load node: " + fxmlPath, e);
         }
