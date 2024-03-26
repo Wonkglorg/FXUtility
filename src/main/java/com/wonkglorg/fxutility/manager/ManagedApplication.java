@@ -196,8 +196,7 @@ public abstract class ManagedApplication extends javafx.application.Application 
 
     private URL getResource(String path) {
         //use classloader instead of getreources from the class, because the class resource is package path based rather than default resource path based
-        ClassLoader classLoader = getClass().getClassLoader();
-        URL url = classLoader.getResource(path);
+        URL url = getClass().getResource(path);
         if (url == null) {
             throw new NullPointerException("Could not load resource: \"" + path + "\" not a valid path.");
         }
