@@ -44,7 +44,6 @@ public abstract class ManagedApplication extends javafx.application.Application 
     /**
      * Loads a scene (making it visible if it has already been added)
      *
-     * @param primaryStage
      * @param name
      */
     public void loadScene(String name) {
