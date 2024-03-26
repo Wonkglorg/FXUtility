@@ -1,4 +1,4 @@
-package com.wonkglorg.fxutility.manager.resizer;
+package com.wonkglorg.fxutility.manager.event.resizer;
 
 import javafx.scene.Cursor;
 import javafx.scene.Node;

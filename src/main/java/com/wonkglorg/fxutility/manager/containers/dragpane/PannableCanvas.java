@@ -1,4 +1,4 @@
-package com.wonkglorg.fxutility.manager.dragpane;
+package com.wonkglorg.fxutility.manager.containers.dragpane;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;

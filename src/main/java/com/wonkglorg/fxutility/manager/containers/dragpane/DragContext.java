@@ -1,4 +1,4 @@
-package com.wonkglorg.fxutility.manager.dragpane;
+package com.wonkglorg.fxutility.manager.containers.dragpane;
 
 /**
  * Mouse drag context used for scene and nodes.

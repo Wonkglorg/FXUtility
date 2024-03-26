@@ -20,4 +20,8 @@ public class NodeUtil {
 
         return null;
     }
+
+    public static boolean hasParentOfType(Node node, Class<? extends Node> targetType) {
+        return findParentOfType(node, targetType) != null;
+    }
 }
