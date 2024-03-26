@@ -190,13 +190,14 @@ public abstract class ManagedApplication extends javafx.application.Application 
      */
     private String validatePath(String path, String name) {
         if (path == null) throw new NullPointerException("Path for: \"" + name + "\" cannot be null!");
-        if (path.startsWith("/")) return path;
-        return "/" + path;
+        if (path.startsWith("/")) return path.replaceFirst("/", "");
+        return path;
     }
 
     private URL getResource(String path) {
         //use classloader instead of getreources from the class, because the class resource is package path based rather than default resource path based
-        URL url = getClass().getResource(path);
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        URL url = loader.getResource(path);
         if (url == null) {
             throw new NullPointerException("Could not load resource: \"" + path + "\" not a valid path.");
         }
