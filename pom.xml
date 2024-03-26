@@ -6,7 +6,7 @@
 
     <groupId>com.wonkglorg</groupId>
     <artifactId>FXUtility</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <name>FXUtility</name>
 
     <properties>
