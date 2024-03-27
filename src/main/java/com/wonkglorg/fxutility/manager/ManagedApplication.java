@@ -100,6 +100,14 @@ public abstract class ManagedApplication extends javafx.application.Application 
         return null;
     }
 
+    public void setNodeVisibility(String key, Class<? extends Node> clazz, boolean visible) {
+        Node node = getNode(key, clazz);
+        if (node == null) {
+            return;
+        }
+        node.setVisible(visible);
+    }
+
     /**
      * Adds a new node
      *
