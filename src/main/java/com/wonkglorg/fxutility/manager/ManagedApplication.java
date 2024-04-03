@@ -13,10 +13,11 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public abstract class ManagedApplication extends javafx.application.Application {
     private final Map<String, Map.Entry<Scene, FXMLLoader>> scenes = new HashMap<>();
-    private final Map<Class<? extends Node>, Map<String, ? super Node>> nodeMap = new HashMap<>();
+    private final Map<Class<? extends Node>, Map<String, Map.Entry<? super Node, FXMLLoader>>> nodeMap = new HashMap<>();
     private Stage primaryStage;
     private final Map<String, Stylesheet> cssMap = new HashMap<>();
     private static ManagedApplication instance;
@@ -132,13 +133,14 @@ public abstract class ManagedApplication extends javafx.application.Application 
      */
     public void addNode(String name, URL fxmlPath) {
         if (fxmlPath == null) throw new NullPointerException("Path for: \"" + name + "\" cannot be null!");
+        FXMLLoader loader = new FXMLLoader(fxmlPath);
         Node node = null;
         try {
-            node = FXMLLoader.load(fxmlPath);
+            node = loader.load();
         } catch (IOException e) {
             throw new RuntimeException("Could not load node: " + fxmlPath, e);
         }
-        addNodeIfAbsent(node, name);
+        addNodeIfAbsent(node, loader, name);
     }
 
     /**
@@ -148,7 +150,7 @@ public abstract class ManagedApplication extends javafx.application.Application 
      * @param name
      */
     public void addNode(Node node, String name) {
-        addNodeIfAbsent(node, name);
+        addNodeIfAbsent(node, null, name);
     }
 
     /**
@@ -157,9 +159,9 @@ public abstract class ManagedApplication extends javafx.application.Application 
      * @param node
      * @param name
      */
-    private void addNodeIfAbsent(Node node, String name) {
+    private void addNodeIfAbsent(Node node, FXMLLoader loader, String name) {
         nodeMap.putIfAbsent(node.getClass(), new HashMap<>());
-        nodeMap.get(node.getClass()).putIfAbsent(name, node);
+        nodeMap.get(node.getClass()).putIfAbsent(name, Map.entry(node, loader));
     }
 
     public void addCss(String name, Stylesheet stylesheet) {
@@ -224,8 +226,34 @@ public abstract class ManagedApplication extends javafx.application.Application 
         return url;
     }
 
-    public <T> T getController(String fxmlName) {
-        return scenes.get(fxmlName).getValue().getController();
+    /**
+     * Gets the controller from a registered scene by its name
+     *
+     * @param sceneName
+     * @param <T>
+     * @return
+     */
+    public <T> T getController(String sceneName) {
+        return scenes.get(sceneName).getValue().getController();
+    }
+
+    /**
+     * Gets the controller from a registered Node by its name and type
+     *
+     * @param clazz
+     * @param nodeName
+     * @param <T>
+     * @return the controller or null if the node has no controller
+     */
+    public <T> Optional<T> getController(Class<T> clazz, String nodeName) {
+        try {
+            T controller = nodeMap.get(clazz).get(nodeName).getValue().getController();
+            return controller == null ? Optional.empty() : Optional.of(controller);
+        } catch (NullPointerException e) {
+            throw new NullPointerException("Could not get controller for: " + nodeName);
+        } catch (Exception e) {
+            throw new RuntimeException("Could not get controller for: " + nodeName, e);
+        }
     }
 
     public Stage getStage() {
@@ -240,7 +268,7 @@ public abstract class ManagedApplication extends javafx.application.Application 
         return scenes;
     }
 
-    public Map<Class<? extends Node>, Map<String, ? super Node>> getNodeMap() {
+    public Map<Class<? extends Node>, Map<String, Map.Entry<? super Node, FXMLLoader>>> getNodeMap() {
         return nodeMap;
     }
 
