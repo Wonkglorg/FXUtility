@@ -245,7 +245,7 @@ public abstract class ManagedApplication extends javafx.application.Application 
      * @param <T>
      * @return the controller or null if the node has no controller
      */
-    public <T> Optional<T> getController(Class<T> clazz, String nodeName) {
+    public <T> Optional<T> getController(String nodeName, Class<? extends Node> clazz) {
         try {
             T controller = nodeMap.get(clazz).get(nodeName).getValue().getController();
             return controller == null ? Optional.empty() : Optional.of(controller);
