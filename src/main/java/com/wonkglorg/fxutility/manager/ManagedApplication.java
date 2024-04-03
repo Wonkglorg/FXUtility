@@ -99,7 +99,7 @@ public abstract class ManagedApplication extends javafx.application.Application 
             return null;
         }
 
-        Node node = (Node) nodeMap.get(clazz).get(key);
+        Node node = (Node) nodeMap.get(clazz).get(key).getKey();
         if (clazz.isInstance(node)) {
             return clazz.cast(node);
         }
