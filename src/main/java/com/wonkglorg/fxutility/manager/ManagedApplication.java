@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public abstract class ManagedApplication extends javafx.application.Application {
-    private final Map<String, Scene> scenes = new HashMap<>();
+    private final Map<String, Map.Entry<Scene, FXMLLoader>> scenes = new HashMap<>();
     private final Map<Class<? extends Node>, Map<String, ? super Node>> nodeMap = new HashMap<>();
     private Stage primaryStage;
     private final Map<String, Stylesheet> cssMap = new HashMap<>();
@@ -44,7 +44,7 @@ public abstract class ManagedApplication extends javafx.application.Application 
      * @param name
      * @param fxmlPath
      */
-    public void addScene(String name, URL fxmlPath) {
+    public Scene addScene(String name, URL fxmlPath) {
         if (fxmlPath == null) throw new NullPointerException("Path for: \"" + name + "\" cannot be null!");
         FXMLLoader loader = new FXMLLoader(fxmlPath);
         Parent root = null;
@@ -54,7 +54,8 @@ public abstract class ManagedApplication extends javafx.application.Application 
             throw new RuntimeException("Could not load scene: " + fxmlPath, e);
         }
         Scene scene = new Scene(root);
-        scenes.put(name, scene);
+        scenes.put(name, Map.entry(scene, loader));
+        return scene;
     }
 
     /**
@@ -74,8 +75,12 @@ public abstract class ManagedApplication extends javafx.application.Application 
      */
     public void loadScene(Stage stage, String name) {
         Objects.requireNonNull(stage);
-        stage.setScene(scenes.get(name));
+        stage.setScene(scenes.get(name).getKey());
         stage.show();
+    }
+
+    public Map.Entry<Scene, FXMLLoader> getScene(String name) {
+        return scenes.get(name);
     }
 
 
@@ -106,6 +111,16 @@ public abstract class ManagedApplication extends javafx.application.Application 
             return;
         }
         node.setVisible(visible);
+    }
+
+    public <T> T getControllerClassFromPath(String path) {
+        FXMLLoader loader = new FXMLLoader(getResource(path));
+        try {
+            loader.load();
+        } catch (IOException e) {
+            throw new RuntimeException("Could not load controller: " + path, e);
+        }
+        return loader.getController();
     }
 
     /**
@@ -170,7 +185,7 @@ public abstract class ManagedApplication extends javafx.application.Application 
     public void setCssForScene(String sceneName, String cssName) {
 
         if (!scenes.containsKey(sceneName)) throw new RuntimeException("Scene not found: " + sceneName);
-        Scene scene = scenes.get(sceneName);
+        Scene scene = scenes.get(sceneName).getKey();
 
         if (!cssMap.containsKey(cssName)) throw new RuntimeException("CSS not found: " + cssName);
 
@@ -209,11 +224,27 @@ public abstract class ManagedApplication extends javafx.application.Application 
         return url;
     }
 
+    public <T> T getController(String fxmlName) {
+        return scenes.get(fxmlName).getValue().getController();
+    }
+
     public Stage getStage() {
         return primaryStage;
     }
 
     public static ChooserUtil getChooser() {
         return chooserUtil;
+    }
+
+    public Map<String, Map.Entry<Scene, FXMLLoader>> getScenes() {
+        return scenes;
+    }
+
+    public Map<Class<? extends Node>, Map<String, ? super Node>> getNodeMap() {
+        return nodeMap;
+    }
+
+    public Map<String, Stylesheet> getCssMap() {
+        return cssMap;
     }
 }
