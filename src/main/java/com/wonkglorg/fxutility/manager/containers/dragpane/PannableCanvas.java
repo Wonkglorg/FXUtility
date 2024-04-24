@@ -9,7 +9,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 
 /**
- * The canvas which holds all of the nodes of the application.
+ * The canvas that holds all the nodes, can be panned and zoomed
  */
 public class PannableCanvas extends Pane {
 
@@ -26,9 +26,7 @@ public class PannableCanvas extends Pane {
 
         // logging
         addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
-            System.out.println(
-                    "canvas event: " + (((event.getSceneX() - getBoundsInParent().getMinX()) / getScale()) + ", scale: " + getScale())
-            );
+            System.out.println("canvas event: " + (((event.getSceneX() - getBoundsInParent().getMinX()) / getScale()) + ", scale: " + getScale()));
             System.out.println("canvas bounds: " + getBoundsInParent());
         });
 
