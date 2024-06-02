@@ -256,6 +256,15 @@ public abstract class ManagedApplication extends javafx.application.Application 
         }
     }
 
+    /**
+     * Closes the window of a node
+     *
+     * @param node
+     */
+    public static void closeWindow(Node node) {
+        node.getScene().getWindow().hide();
+    }
+
     public Stage getStage() {
         return primaryStage;
     }
