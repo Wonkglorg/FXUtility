@@ -5,4 +5,5 @@ module com.wonkglorg.fxutility {
     exports com.wonkglorg.fxutility.manager.containers.dragpane;
     exports com.wonkglorg.fxutility.manager.util;
     exports com.wonkglorg.fxutility.manager;
+    exports com.wonkglorg.fxutility.manager.util.fader;
 }
