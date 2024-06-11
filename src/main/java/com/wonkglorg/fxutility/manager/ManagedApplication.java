@@ -190,7 +190,7 @@ public abstract class ManagedApplication extends javafx.application.Application 
      * @param name       The name of the css file
      * @param stylesheet The stylesheet object
      */
-    public void addCss(String name, Stylesheet stylesheet) {
+    public void addStylesheet(String name, Stylesheet stylesheet) {
         cssMap.put(name, stylesheet);
     }
 
@@ -200,10 +200,10 @@ public abstract class ManagedApplication extends javafx.application.Application 
      * @param name The name of the css file
      * @param path The path to the css file
      */
-    public void addCss(String name, String path) {
+    public void addStylesheet(String name, URL path) {
         Stylesheet stylesheet = null;
         try {
-            stylesheet = Stylesheet.loadBinary(getClass().getResourceAsStream(path));
+            stylesheet = Stylesheet.loadBinary(path);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -216,7 +216,7 @@ public abstract class ManagedApplication extends javafx.application.Application 
      * @param sceneName
      * @param cssName
      */
-    public void setCssForScene(String sceneName, String cssName) {
+    public void setStylesheetForScene(String sceneName, String cssName) {
 
         if (!scenes.containsKey(sceneName)) throw new RuntimeException("Scene not found: " + sceneName);
         Scene scene = scenes.get(sceneName).getKey();
@@ -233,7 +233,7 @@ public abstract class ManagedApplication extends javafx.application.Application 
      * @param cssName   The name of the css file
      * @return true if the css was removed successfully
      */
-    public boolean removeCssForScene(String sceneName, String cssName) {
+    public boolean removeStylesheetForScene(String sceneName, String cssName) {
         if (!scenes.containsKey(sceneName)) throw new RuntimeException("Scene not found: " + sceneName);
         Scene scene = scenes.get(sceneName).getKey();
 
@@ -250,7 +250,7 @@ public abstract class ManagedApplication extends javafx.application.Application 
      * @param name The name of the css file
      * @return The css file
      */
-    public Stylesheet getCss(String name) {
+    public Stylesheet getStylesheet(String name) {
         return cssMap.get(name);
     }
 
