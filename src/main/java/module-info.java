@@ -6,4 +6,6 @@ module com.wonkglorg.fxutility {
     exports com.wonkglorg.fxutility.manager.util;
     exports com.wonkglorg.fxutility.manager;
     exports com.wonkglorg.fxutility.manager.util.fader;
+
+    opens com.wonkglorg.fxutility.manager to javafx.fxml;
 }
