@@ -5,12 +5,15 @@ import javafx.fxml.FXML;
 /**
  * This class is a controller that is managed by the ManagedControllerManager. It is used to update the controller. and provide some useful methods.
  */
+@SuppressWarnings("unused")
 public abstract class ManagedController {
 
     /**
      * Calls an update on the controller
      */
-    public abstract void update();
+    public void update() {
+        //default implementation
+    }
 
     @FXML
     void initialize() {
