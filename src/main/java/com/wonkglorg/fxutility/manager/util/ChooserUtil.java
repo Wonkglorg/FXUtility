@@ -20,13 +20,34 @@ public class ChooserUtil {
         this.stage = stage;
     }
 
+
     /**
      * Open a file chooser dialog
      *
-     * @param fileType
-     * @return
+     * @param defaultDirectory The default directory to open the dialog in
+     * @param title            The title of the dialog
+     * @return The selected file
      */
+    public Optional<File> directoryChooser(File defaultDirectory, String title) {
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle(title);
+        chooser.setInitialDirectory(defaultDirectory);
 
+        File selectedDirectory = chooser.showDialog(stage);
+
+        if (selectedDirectory == null || !selectedDirectory.isDirectory()) {
+            return Optional.empty();
+        }
+        return Optional.of(selectedDirectory);
+    }
+
+    /**
+     * Open a file chooser dialog
+     *
+     * @param defaultDirectory The default directory to open the dialog in
+     * @param fileType         The file type filter
+     * @return The selected file
+     */
     public Optional<File> fileChooser(File defaultDirectory, String title, FileChooser.ExtensionFilter... fileType) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().addAll(fileType);
@@ -44,19 +65,42 @@ public class ChooserUtil {
     /**
      * Open a file chooser dialog
      *
-     * @param defaultDirectory
-     * @param fileType
-     * @return
+     * @param defaultDirectory The default directory to open the dialog in
+     * @param title            The title of the dialog
+     * @param initialFileTitle The initial file title
+     * @param fileType         The file type filter
+     * @return The selected file
+     */
+    public Optional<File> saveDialog(File defaultDirectory, String title, String initialFileTitle, FileChooser.ExtensionFilter... fileType) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(title);
+        fileChooser.setInitialDirectory(defaultDirectory);
+        fileChooser.setInitialFileName(initialFileTitle);
+        if (fileType.length > 0) {
+            fileChooser.getExtensionFilters().addAll(fileType);
+            fileChooser.setSelectedExtensionFilter(fileType[0]);
+        }
+
+        var file = fileChooser.showSaveDialog(stage);
+        return Optional.ofNullable(file);
+    }
+
+    /**
+     * Open a file chooser dialog
+     *
+     * @param defaultDirectory The default directory to open the dialog in
+     * @param fileType         The file type filter
+     * @return The selected file
      */
     public Optional<File> fileChooser(File defaultDirectory, FileChooser.ExtensionFilter... fileType) {
         return fileChooser(defaultDirectory, "Select File", fileType);
     }
 
     /**
-     * Open a file chooser dialog in the default user directory
+     * Open a file chooser dialog in the default user home directory
      *
-     * @param fileType
-     * @return
+     * @param fileType The file type filter
+     * @return The selected file
      */
     public Optional<File> fileChooser(FileChooser.ExtensionFilter... fileType) {
         return fileChooser(new File(System.getProperty("user.home")), "Select File", fileType);
@@ -65,7 +109,7 @@ public class ChooserUtil {
     /**
      * Open a file chooser dialog in the default user directory with no file type filter set
      *
-     * @return
+     * @return The selected file
      */
     public Optional<File> fileChooser() {
         return fileChooser(new File(System.getProperty("user.home")), "Select File");
@@ -75,29 +119,8 @@ public class ChooserUtil {
     /**
      * Open a file chooser dialog
      *
-     * @param defaultDirectory
-     * @param title
-     * @return
-     */
-    public Optional<File> directoryChooser(File defaultDirectory, String title) {
-        DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle(title);
-        chooser.setInitialDirectory(defaultDirectory);
-
-        File selectedDirectory = chooser.showDialog(stage);
-
-        if (selectedDirectory == null || !selectedDirectory.isDirectory()) {
-            return Optional.empty();
-        }
-        return Optional.of(selectedDirectory);
-    }
-
-
-    /**
-     * Open a file chooser dialog
-     *
-     * @param defaultDirectory
-     * @return
+     * @param defaultDirectory The default directory to open the dialog in
+     * @return The selected file
      */
     public Optional<File> directoryChooser(File defaultDirectory) {
         return directoryChooser(defaultDirectory, "Select Directory");
@@ -106,7 +129,7 @@ public class ChooserUtil {
     /**
      * Open a file chooser dialog in the default user directory
      *
-     * @return
+     * @return The selected file
      */
     public Optional<File> directoryChooser() {
         return directoryChooser(new File(System.getProperty("user.home")));
@@ -116,7 +139,7 @@ public class ChooserUtil {
     /**
      * Sets the stage for the ChooserUtil
      *
-     * @param stage
+     * @param stage The stage to set
      */
     public void setStage(Stage stage) {
         this.stage = stage;
