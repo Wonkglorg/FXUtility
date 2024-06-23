@@ -80,6 +80,12 @@ public abstract class ManagedApplication extends javafx.application.Application 
         stage.show();
     }
 
+    /**
+     * Gets a scene by its name
+     *
+     * @param name the name of the scene
+     * @return the scene and its matching controller
+     */
     public Map.Entry<Scene, FXMLLoader> getScene(String name) {
         return scenes.get(name);
     }
@@ -106,6 +112,13 @@ public abstract class ManagedApplication extends javafx.application.Application 
         return null;
     }
 
+    /**
+     * Sets the visibility of a node
+     *
+     * @param key     the key of the node
+     * @param clazz   the class of the node
+     * @param visible the visibility of the node
+     */
     public void setNodeVisibility(String key, Class<? extends Node> clazz, boolean visible) {
         Node node = getNode(key, clazz);
         if (node == null) {
@@ -114,6 +127,13 @@ public abstract class ManagedApplication extends javafx.application.Application 
         node.setVisible(visible);
     }
 
+    /**
+     * Gets a controller based on the path to the fxml file
+     *
+     * @param path the path to the fxml file
+     * @param <T>  the type of the controller
+     * @return the controller
+     */
     public <T> T getControllerClassFromPath(String path) {
         FXMLLoader loader = new FXMLLoader(getResource(path));
         try {
@@ -164,14 +184,26 @@ public abstract class ManagedApplication extends javafx.application.Application 
         nodeMap.get(node.getClass()).putIfAbsent(name, Map.entry(node, loader));
     }
 
-    public void addCss(String name, Stylesheet stylesheet) {
+    /**
+     * Adds a css file to the css map
+     *
+     * @param name       The name of the css file
+     * @param stylesheet The stylesheet object
+     */
+    public void addStylesheet(String name, Stylesheet stylesheet) {
         cssMap.put(name, stylesheet);
     }
 
-    public void addCss(String name, String path) {
+    /**
+     * Adds a css file to the css map
+     *
+     * @param name The name of the css file
+     * @param path The path to the css file
+     */
+    public void addStylesheet(String name, URL path) {
         Stylesheet stylesheet = null;
         try {
-            stylesheet = Stylesheet.loadBinary(getClass().getResourceAsStream(path));
+            stylesheet = Stylesheet.loadBinary(path);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -184,7 +216,7 @@ public abstract class ManagedApplication extends javafx.application.Application 
      * @param sceneName
      * @param cssName
      */
-    public void setCssForScene(String sceneName, String cssName) {
+    public void setStylesheetForScene(String sceneName, String cssName) {
 
         if (!scenes.containsKey(sceneName)) throw new RuntimeException("Scene not found: " + sceneName);
         Scene scene = scenes.get(sceneName).getKey();
@@ -194,7 +226,31 @@ public abstract class ManagedApplication extends javafx.application.Application 
         scene.getStylesheets().add(cssMap.get(cssName).getUrl());
     }
 
-    public Stylesheet getCss(String name) {
+    /**
+     * Removes a css style from a scene by its name
+     *
+     * @param sceneName The name of the scene
+     * @param cssName   The name of the css file
+     * @return true if the css was removed successfully
+     */
+    public boolean removeStylesheetForScene(String sceneName, String cssName) {
+        if (!scenes.containsKey(sceneName)) throw new RuntimeException("Scene not found: " + sceneName);
+        Scene scene = scenes.get(sceneName).getKey();
+
+        if (!cssMap.containsKey(cssName)) throw new RuntimeException("CSS not found: " + cssName);
+
+        scene.getStylesheets().remove(cssMap.get(cssName).getUrl());
+
+        return true;
+    }
+
+    /**
+     * Gets a css style by its name
+     *
+     * @param name The name of the css file
+     * @return The css file
+     */
+    public Stylesheet getStylesheet(String name) {
         return cssMap.get(name);
     }
 
